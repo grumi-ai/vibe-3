@@ -1,0 +1,15 @@
+.agents/
+.codex/
+.gitdata/
+gitmeta/
+node_modules/
+dist/
+.uv-cache/
+.venv/
+__pycache__/
+*.py[cod]
+backend/data/*.db
+backend/data/*.db-*
+frontend/vite.config.js
+frontend/vite.config.d.ts
+frontend/*.tsbuildinfo
