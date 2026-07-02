@@ -46,9 +46,24 @@ create table if not exists news_articles (
   id integer primary key autoincrement,
   title text not null,
   source text,
+  agency text,
   url text unique,
   summary text,
+  content text,
   keyword text,
   published_at datetime,
+  target_date text,
   collected_at datetime not null default current_timestamp
+);
+
+create table if not exists news_crawl_runs (
+  id integer primary key autoincrement,
+  target_date text not null,
+  status text not null,
+  total_count integer not null default 0,
+  success_count integer not null default 0,
+  failed_count integer not null default 0,
+  error_message text,
+  started_at datetime not null default current_timestamp,
+  finished_at datetime
 );

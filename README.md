@@ -94,6 +94,7 @@ npm.cmd run dev
 
 - `GET /api/news`
 - `POST /api/news/collect`
+- `GET /api/news/crawl-runs`
 - `GET /api/news/keywords`
 
 ## First deployment notes
@@ -145,6 +146,15 @@ Use this after the Render services finish deploying:
 5. Open the browser network panel and confirm `/api` requests resolve to the backend host, not `localhost`.
 6. Verify the frontend does not show CORS or fetch errors.
 7. If anything fails, check the Render service logs for the backend first.
+
+## Policy news crawling
+
+The backend collects policy news from `https://www.korea.kr/news/policyNewsList.do`.
+
+- Automatic collection runs every day at 09:00 Asia/Seoul for the previous day.
+- Manual collection is available from the dashboard news section by selecting a date and clicking `Collect`.
+- Articles are saved with title, source, agency, URL, summary, content, published date, and target date.
+- Crawl runs are stored so operators can inspect success and failure counts.
 
 ## Troubleshooting
 

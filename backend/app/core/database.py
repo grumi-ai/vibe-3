@@ -16,3 +16,19 @@ def init_db() -> None:
 
     with get_connection() as connection:
         connection.executescript(schema_path.read_text(encoding="utf-8"))
+        _ensure_news_article_columns(connection)
+
+
+def _ensure_news_article_columns(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"] for row in connection.execute("pragma table_info(news_articles)").fetchall()
+    }
+    required_columns = {
+        "agency": "text",
+        "content": "text",
+        "target_date": "text",
+    }
+
+    for column, definition in required_columns.items():
+        if column not in existing_columns:
+            connection.execute(f"alter table news_articles add column {column} {definition}")

@@ -64,4 +64,5 @@ def register_routes(app: FastAPI) -> None:
     )
     app.add_api_route("/api/news", news.list_news, methods=["GET"], tags=["news"])
     app.add_api_route("/api/news/collect", news.collect_news, methods=["POST"], tags=["news"])
+    app.add_api_route("/api/news/crawl-runs", news.list_crawl_runs, methods=["GET"], tags=["news"])
     app.add_api_route("/api/news/keywords", news.list_keywords, methods=["GET"], tags=["news"])

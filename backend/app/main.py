@@ -7,12 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import register_routes
 from app.core.config import get_cors_origins
 from app.core.database import init_db
+from app.jobs.scheduler import create_scheduler
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     init_db()
-    yield
+    scheduler = create_scheduler()
+    scheduler.start()
+    try:
+        yield
+    finally:
+        scheduler.shutdown(wait=False)
 
 
 def create_app() -> FastAPI:

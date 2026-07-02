@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NewsPanel } from "../features/news/NewsPanel";
 import { TeamSchedulePanel } from "../features/team-schedule/TeamSchedulePanel";
 import { getDatabaseHealth, getSystemHealth, type DatabaseHealth, type SystemHealth } from "../shared/api/health";
 import { ConnectionStatusCard } from "../shared/components/ConnectionStatusCard";
@@ -46,6 +47,10 @@ export function DashboardPage() {
 
       <section className="scaffoldSection">
         <TeamSchedulePanel />
+      </section>
+
+      <section className="scaffoldSection">
+        <NewsPanel />
       </section>
 
       <section className="scaffoldSection">
