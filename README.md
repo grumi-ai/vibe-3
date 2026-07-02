@@ -98,7 +98,7 @@ npm.cmd run dev
 
 ## First deployment notes
 
-This repository does not include a cloud-host specific manifest yet, but it now includes Docker-based deployment config.
+This repository now includes Docker-based deployment config and a Render blueprint.
 
 Recommended first production setup:
 
@@ -124,6 +124,15 @@ docker compose up --build
 - Backend API: `http://localhost:8000`
 
 The frontend container serves the built SPA through Nginx and proxies `/api` to the backend container.
+
+### Render deployment
+
+The repository also includes `render.yaml` for a two-service Render setup:
+
+- `vibe-3-api`: Docker-based FastAPI service with a persistent disk for SQLite
+- `vibe-3-web`: Static site built from the Vite frontend
+
+The frontend reads the backend host through `VITE_API_BASE_URL`, and the backend allows cross-origin requests through `CORS_ORIGINS`.
 
 ## Troubleshooting
 
