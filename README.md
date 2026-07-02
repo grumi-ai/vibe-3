@@ -98,7 +98,7 @@ npm.cmd run dev
 
 ## First deployment notes
 
-This repository does not include a hosting config yet, so there is no one-click deployment path wired in.
+This repository does not include a cloud-host specific manifest yet, but it now includes Docker-based deployment config.
 
 Recommended first production setup:
 
@@ -112,10 +112,22 @@ Suggested target split:
 - Backend: Render, Fly.io, Railway, or a similar Python host
 - Frontend: Vercel, Netlify, or a similar static host
 
+### Docker-based deployment
+
+The repository now includes a Docker Compose setup for local validation or container-based deployment.
+
+```powershell
+docker compose up --build
+```
+
+- Frontend: `http://localhost:8080`
+- Backend API: `http://localhost:8000`
+
+The frontend container serves the built SPA through Nginx and proxies `/api` to the backend container.
+
 ## Troubleshooting
 
 - If `npm` fails in PowerShell, use `npm.cmd`.
 - If `uv` is not found, confirm it is installed and on `PATH`.
 - If the frontend cannot reach the backend, check the Vite proxy and CORS settings.
 - If `GET /api/db/health` fails, confirm the SQLite file exists and the backend initialized the database.
-
