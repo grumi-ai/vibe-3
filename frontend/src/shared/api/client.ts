@@ -1,4 +1,6 @@
-const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL ?? "");
+const API_BASE_URL_STORAGE_KEY = "vibe3.apiBaseUrl";
+const API_BASE_URL_CHANGED_EVENT = "vibe3-api-base-url-changed";
+const DEFAULT_API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL ?? "");
 
 function normalizeApiBaseUrl(value: string): string {
   const trimmed = value.trim().replace(/\/+$/, "");
@@ -14,11 +16,37 @@ function normalizeApiBaseUrl(value: string): string {
 }
 
 function buildApiUrl(path: string): string {
-  if (!API_BASE_URL) {
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) {
     return path;
   }
 
-  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  return `${apiBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function getApiBaseUrl(): string {
+  if (typeof window === "undefined") {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  const savedValue = window.localStorage.getItem(API_BASE_URL_STORAGE_KEY);
+  return normalizeApiBaseUrl(savedValue ?? DEFAULT_API_BASE_URL);
+}
+
+export function setApiBaseUrl(value: string): string {
+  const normalizedValue = normalizeApiBaseUrl(value);
+  if (normalizedValue) {
+    window.localStorage.setItem(API_BASE_URL_STORAGE_KEY, normalizedValue);
+  } else {
+    window.localStorage.removeItem(API_BASE_URL_STORAGE_KEY);
+  }
+  window.dispatchEvent(new CustomEvent(API_BASE_URL_CHANGED_EVENT, { detail: normalizedValue }));
+  return normalizedValue;
+}
+
+export function subscribeApiBaseUrlChange(callback: () => void): () => void {
+  window.addEventListener(API_BASE_URL_CHANGED_EVENT, callback);
+  return () => window.removeEventListener(API_BASE_URL_CHANGED_EVENT, callback);
 }
 
 export async function apiGet<T>(path: string): Promise<T> {

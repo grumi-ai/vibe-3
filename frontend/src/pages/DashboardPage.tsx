@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NewsPanel } from "../features/news/NewsPanel";
 import { TeamSchedulePanel } from "../features/team-schedule/TeamSchedulePanel";
 import { getDatabaseHealth, getSystemHealth, type DatabaseHealth, type SystemHealth } from "../shared/api/health";
+import { BackendSettingsPanel } from "../shared/components/BackendSettingsPanel";
 import { ConnectionStatusCard } from "../shared/components/ConnectionStatusCard";
 
 export function DashboardPage() {
@@ -10,8 +11,9 @@ export function DashboardPage() {
   const [healthError, setHealthError] = useState<string | null>(null);
   const [databaseError, setDatabaseError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getSystemHealth()
+  async function refreshConnectionStatus() {
+    await Promise.all([
+      getSystemHealth()
       .then((data) => {
         setHealth(data);
         setHealthError(null);
@@ -19,9 +21,9 @@ export function DashboardPage() {
       .catch((error: unknown) => {
         setHealth(null);
         setHealthError(error instanceof Error ? error.message : "FE-BE connection failed");
-      });
+      }),
 
-    getDatabaseHealth()
+      getDatabaseHealth()
       .then((data) => {
         setDatabaseHealth(data);
         setDatabaseError(null);
@@ -29,7 +31,12 @@ export function DashboardPage() {
       .catch((error: unknown) => {
         setDatabaseHealth(null);
         setDatabaseError(error instanceof Error ? error.message : "BE-DB connection failed");
-      });
+      }),
+    ]);
+  }
+
+  useEffect(() => {
+    refreshConnectionStatus();
   }, []);
 
   return (
@@ -43,6 +50,16 @@ export function DashboardPage() {
           </p>
         </div>
         <ConnectionStatusCard health={health} error={healthError} />
+      </section>
+
+      <section className="scaffoldSection">
+        <BackendSettingsPanel
+          onConnectionChange={(nextHealth, nextError) => {
+            setHealth(nextHealth);
+            setHealthError(nextError);
+            refreshConnectionStatus();
+          }}
+        />
       </section>
 
       <section className="scaffoldSection">
