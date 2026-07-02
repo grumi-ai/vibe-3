@@ -36,6 +36,7 @@ def register_routes(app: FastAPI) -> None:
         methods=["DELETE"],
         tags=["schedules"],
     )
+    app.add_api_route("/api/excel/upload", excel.upload_excel_file, methods=["POST"], tags=["excel"])
     app.add_api_route("/api/excel/split", excel.split_excel, methods=["POST"], tags=["excel"])
     app.add_api_route("/api/excel/merge", excel.merge_excel, methods=["POST"], tags=["excel"])
     app.add_api_route(
@@ -47,6 +48,12 @@ def register_routes(app: FastAPI) -> None:
     app.add_api_route(
         "/api/complaints/manuals",
         complaints.create_manual,
+        methods=["POST"],
+        tags=["complaints"],
+    )
+    app.add_api_route(
+        "/api/complaints/manuals/upload",
+        complaints.upload_manual,
         methods=["POST"],
         tags=["complaints"],
     )

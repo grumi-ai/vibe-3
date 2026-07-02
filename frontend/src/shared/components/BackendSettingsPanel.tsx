@@ -7,7 +7,7 @@ type Props = {
 };
 
 export function BackendSettingsPanel({ onConnectionChange }: Props) {
-  const [apiUrl, setApiUrl] = useState(getApiBaseUrl);
+  const [apiUrl, setApiUrl] = useState(getApiBaseUrl());
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
@@ -20,10 +20,10 @@ export function BackendSettingsPanel({ onConnectionChange }: Props) {
     setTestError(null);
     try {
       const health = await getSystemHealth();
-      setTestResult(`${health.service} is ${health.status}`);
+      setTestResult(`${health.service} 상태: ${health.status}`);
       onConnectionChange?.(health, null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Backend connection failed.";
+      const message = error instanceof Error ? error.message : "백엔드 연결에 실패했습니다.";
       setTestError(message);
       onConnectionChange?.(null, message);
     } finally {
@@ -48,36 +48,32 @@ export function BackendSettingsPanel({ onConnectionChange }: Props) {
   return (
     <section className="backendSettings">
       <header className="sectionHeader">
-        <p className="sectionEyebrow">Backend URL</p>
+        <p className="sectionEyebrow">백엔드 연결</p>
         <div>
-          <h2 className="sectionTitle">Backend connection settings</h2>
+          <h2 className="sectionTitle">백엔드 주소 설정</h2>
           <p className="sectionDescription">
-            Set the API host used by this browser. Use a Cloudflared HTTPS URL or another deployed backend URL.
+            현재 브라우저에서 사용할 API 주소를 지정합니다. 배포된 HTTPS 주소 또는 로컬 개발 서버 주소를 입력한 뒤 연결을 확인하세요.
           </p>
         </div>
       </header>
 
       <form className="backendSettingsForm" onSubmit={handleSubmit}>
         <label>
-          API base URL
-          <input
-            value={apiUrl}
-            onChange={(event) => setApiUrl(event.target.value)}
-            placeholder="https://example.trycloudflare.com"
-          />
+          API 기본 URL
+          <input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} placeholder="https://example.trycloudflare.com" />
         </label>
         <button type="submit" className="primaryButton" disabled={testing}>
-          {testing ? "Testing..." : "Save and test"}
+          {testing ? "확인 중..." : "연결 확인"}
         </button>
         <button type="button" className="ghostButton" onClick={handleReset}>
-          Use default
+          기본값 사용
         </button>
       </form>
 
       <dl className="statusGrid">
         <div className="wide">
-          <dt>Active API base URL</dt>
-          <dd>{getApiBaseUrl() || "Same origin / Vite proxy"}</dd>
+          <dt>현재 API 기본 URL</dt>
+          <dd>{getApiBaseUrl() || "동일 출처 / Vite 프록시"}</dd>
         </div>
       </dl>
       {testResult ? <p className="successText">{testResult}</p> : null}

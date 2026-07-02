@@ -52,7 +52,7 @@ const emptyScheduleForm: ScheduleFormState = {
 };
 
 function resolveMemberName(schedule: ScheduleItem, members: MemberItem[]): string {
-  return schedule.member_name ?? members.find((member) => member.id === schedule.member_id)?.name ?? "Unassigned";
+  return schedule.member_name ?? members.find((member) => member.id === schedule.member_id)?.name ?? "미배정";
 }
 
 function groupSchedulesByDay(schedules: ScheduleItem[]) {
@@ -67,6 +67,48 @@ function groupSchedulesByDay(schedules: ScheduleItem[]) {
     items.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   }
   return groups;
+}
+
+function isSameDay(left: Date, right: Date): boolean {
+  return formatDate(left) === formatDate(right);
+}
+
+function normalizeScheduleTypeClass(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "general" || normalized === "일반") {
+    return "general";
+  }
+  if (normalized === "vacation" || normalized === "휴가") {
+    return "vacation";
+  }
+  if (normalized === "business" || normalized === "출장") {
+    return "business";
+  }
+  if (normalized === "work" || normalized === "근무") {
+    return "work";
+  }
+  return normalized.replace(/\s+/g, "-");
+}
+
+function formatScheduleTypeLabel(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "general" || normalized === "일반") {
+    return "일반";
+  }
+  if (normalized === "vacation" || normalized === "휴가") {
+    return "휴가";
+  }
+  if (normalized === "business" || normalized === "출장") {
+    return "출장";
+  }
+  if (normalized === "work" || normalized === "근무") {
+    return "근무";
+  }
+  return value;
+}
+
+function formatKoreanDate(date: Date, options: Intl.DateTimeFormatOptions): string {
+  return date.toLocaleDateString("ko-KR", options);
 }
 
 export function TeamSchedulePanel() {
@@ -110,7 +152,7 @@ export function TeamSchedulePanel() {
     Promise.all([refreshMembers(), refreshSchedules()])
       .then(() => setError(null))
       .catch((fetchError: unknown) => {
-        setError(fetchError instanceof Error ? fetchError.message : "Failed to load data.");
+        setError(fetchError instanceof Error ? fetchError.message : "데이터를 불러오지 못했습니다.");
       })
       .finally(() => setLoading(false));
   }, [activeView, selectedDate, memberFilterId, memberKeyword, memberActiveFilter, scheduleKeyword]);
@@ -140,16 +182,16 @@ export function TeamSchedulePanel() {
 
       if (editingMemberId === null) {
         await createMember(payload);
-        setMessage("Member created.");
+        setMessage("구성원을 등록했습니다.");
       } else {
         await updateMember(editingMemberId, payload);
-        setMessage("Member updated.");
+        setMessage("구성원 정보를 수정했습니다.");
       }
 
       await refreshMembers();
       resetMemberForm();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to save member.");
+      setError(submitError instanceof Error ? submitError.message : "구성원 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -172,23 +214,23 @@ export function TeamSchedulePanel() {
 
       if (editingScheduleId === null) {
         await createSchedule(payload);
-        setMessage("Schedule created.");
+        setMessage("일정을 등록했습니다.");
       } else {
         await updateSchedule(editingScheduleId, payload);
-        setMessage("Schedule updated.");
+        setMessage("일정을 수정했습니다.");
       }
 
       await refreshSchedules();
       resetScheduleForm();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to save schedule.");
+      setError(submitError instanceof Error ? submitError.message : "일정 저장에 실패했습니다.");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDeleteMember(id: number) {
-    if (!window.confirm("Deactivate this member?")) {
+    if (!window.confirm("이 구성원을 비활성화하시겠습니까?")) {
       return;
     }
     setLoading(true);
@@ -197,16 +239,16 @@ export function TeamSchedulePanel() {
       await deleteMember(id);
       await refreshMembers();
       await refreshSchedules();
-      setMessage("Member deactivated.");
+      setMessage("구성원을 비활성화했습니다.");
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete member.");
+      setError(deleteError instanceof Error ? deleteError.message : "구성원 삭제에 실패했습니다.");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDeleteSchedule(id: number) {
-    if (!window.confirm("Delete this schedule?")) {
+    if (!window.confirm("이 일정을 삭제하시겠습니까?")) {
       return;
     }
     setLoading(true);
@@ -214,9 +256,9 @@ export function TeamSchedulePanel() {
     try {
       await deleteSchedule(id);
       await refreshSchedules();
-      setMessage("Schedule deleted.");
+      setMessage("일정을 삭제했습니다.");
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete schedule.");
+      setError(deleteError instanceof Error ? deleteError.message : "일정 삭제에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -228,21 +270,42 @@ export function TeamSchedulePanel() {
   const monthGridStart = startOfWeek(monthStart);
   const monthDays = Array.from({ length: 42 }, (_, index) => addDays(monthGridStart, index));
   const schedulesByDay = groupSchedulesByDay(schedules);
+  const today = new Date();
+  const activeMembersCount = members.filter((member) => member.is_active).length;
+  const inactiveMembersCount = members.length - activeMembersCount;
+  const monthLabel = formatKoreanDate(selectedDate, { year: "numeric", month: "long" });
+  const weekLabel = `${formatKoreanDate(weekStart, { month: "long", day: "numeric" })} - ${formatKoreanDate(weekDays[6], {
+    month: "long",
+    day: "numeric",
+  })}`;
+  const viewLabel =
+    activeView === "members"
+      ? "구성원 관리"
+      : activeView === "schedules"
+        ? "일정 목록"
+        : activeView === "week"
+          ? "주간 뷰"
+          : "월간 뷰";
+  const periodLabel = activeView === "month" ? monthLabel : activeView === "week" ? weekLabel : "전체 범위";
+  const visibleScheduleCount = schedules.length;
 
   return (
     <section className="teamSchedule">
       <header className="teamScheduleHeader">
         <div>
-          <p className="eyebrow">TEAM SCHEDULE</p>
-          <h2>Team member schedule management</h2>
-          <p className="lead">
-            Manage members, schedules, weekly list view, and monthly calendar view in one place.
-          </p>
+          <p className="eyebrow">팀 일정</p>
+          <h2>팀 구성원 일정 관리</h2>
+          <p className="lead">구성원, 일정, 주간 리스트 뷰, 월간 캘린더 뷰를 한 곳에서 관리합니다.</p>
         </div>
         <div className="teamScheduleActions">
           {(["members", "schedules", "week", "month"] as ViewMode[]).map((view) => (
-            <button key={view} type="button" className={activeView === view ? "tab active" : "tab"} onClick={() => setActiveView(view)}>
-              {view}
+            <button
+              key={view}
+              type="button"
+              className={activeView === view ? "tab active" : "tab"}
+              onClick={() => setActiveView(view)}
+            >
+              {view === "members" ? "구성원" : view === "schedules" ? "일정 목록" : view === "week" ? "주간 뷰" : "월간 뷰"}
             </button>
           ))}
         </div>
@@ -250,45 +313,63 @@ export function TeamSchedulePanel() {
 
       {message ? <p className="successText">{message}</p> : null}
       {error ? <p className="errorText">{error}</p> : null}
-      {loading ? <p className="probeText">Loading...</p> : null}
+      {loading ? <p className="probeText">불러오는 중...</p> : null}
+
+      <div className="scheduleOverview">
+        <article className="overviewCard overviewAccentGreen">
+          <p className="overviewLabel">전체 구성원</p>
+          <strong>{members.length}</strong>
+          <span>활성 {activeMembersCount}명 · 비활성 {inactiveMembersCount}명</span>
+        </article>
+        <article className="overviewCard overviewAccentBlue">
+          <p className="overviewLabel">보이는 일정</p>
+          <strong>{visibleScheduleCount}</strong>
+          <span>{viewLabel} 기준으로 조회 중입니다.</span>
+        </article>
+        <article className="overviewCard overviewAccentAmber">
+          <p className="overviewLabel">현재 범위</p>
+          <strong>{periodLabel}</strong>
+          <span>{memberFilterId === "all" ? "전체 구성원" : "선택한 구성원 필터를 적용했습니다."}</span>
+        </article>
+      </div>
 
       <div className="teamScheduleBody">
         {activeView === "members" ? (
           <div className="twoColumn">
             <section className="panelCard">
-              <h3>{editingMemberId === null ? "Create member" : "Edit member"}</h3>
+              <h3>{editingMemberId === null ? "구성원 등록" : "구성원 수정"}</h3>
               <form className="stackForm" onSubmit={handleMemberSubmit}>
                 <label>
-                  Name
+                  이름
                   <input value={memberForm.name} onChange={(event) => setMemberForm({ ...memberForm, name: event.target.value })} required />
                 </label>
                 <label>
-                  Department
+                  부서
                   <input
                     value={memberForm.department}
                     onChange={(event) => setMemberForm({ ...memberForm, department: event.target.value })}
-                    placeholder="예: 행정지원팀"
+                    placeholder="예: 기획팀"
                   />
                 </label>
                 <label>
-                  Role
+                  직책
                   <input value={memberForm.role} onChange={(event) => setMemberForm({ ...memberForm, role: event.target.value })} />
                 </label>
                 <label>
-                  Phone
+                  연락처
                   <input value={memberForm.phone} onChange={(event) => setMemberForm({ ...memberForm, phone: event.target.value })} />
                 </label>
                 <label>
-                  Memo
+                  메모
                   <textarea value={memberForm.memo} onChange={(event) => setMemberForm({ ...memberForm, memo: event.target.value })} rows={4} />
                 </label>
                 <div className="buttonRow">
                   <button type="submit" className="primaryButton">
-                    {editingMemberId === null ? "Save" : "Update"}
+                    {editingMemberId === null ? "저장" : "수정"}
                   </button>
                   {editingMemberId !== null ? (
                     <button type="button" className="ghostButton" onClick={resetMemberForm}>
-                      Cancel
+                      취소
                     </button>
                   ) : null}
                 </div>
@@ -296,32 +377,28 @@ export function TeamSchedulePanel() {
             </section>
 
             <section className="panelCard">
-              <h3>Member list</h3>
+              <h3>구성원 목록</h3>
               <div className="filterBar">
-                <input
-                  placeholder="Search by name, role, phone"
-                  value={memberKeyword}
-                  onChange={(event) => setMemberKeyword(event.target.value)}
-                />
+                <input placeholder="이름, 직책, 연락처로 검색" value={memberKeyword} onChange={(event) => setMemberKeyword(event.target.value)} />
                 <select value={memberActiveFilter} onChange={(event) => setMemberActiveFilter(event.target.value)}>
-                  <option value="all">All status</option>
-                  <option value="active">Active only</option>
-                  <option value="inactive">Inactive only</option>
+                  <option value="all">전체 상태</option>
+                  <option value="active">활성만</option>
+                  <option value="inactive">비활성만</option>
                 </select>
                 <button type="button" className="ghostButton" onClick={refreshMembers}>
-                  Apply
+                  적용
                 </button>
               </div>
               <div className="tableWrap">
                 <table className="dataTable">
                   <thead>
                     <tr>
-                      <th>Name</th>
-                      <th>Department</th>
-                      <th>Role</th>
-                      <th>Phone</th>
-                      <th>Status</th>
-                      <th>Actions</th>
+                      <th>이름</th>
+                      <th>부서</th>
+                      <th>직책</th>
+                      <th>연락처</th>
+                      <th>상태</th>
+                      <th>작업</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -331,7 +408,7 @@ export function TeamSchedulePanel() {
                         <td>{member.department ?? "-"}</td>
                         <td>{member.role ?? "-"}</td>
                         <td>{member.phone ?? "-"}</td>
-                        <td>{member.is_active ? "Active" : "Inactive"}</td>
+                        <td>{member.is_active ? "활성" : "비활성"}</td>
                         <td>
                           <div className="rowActions">
                             <button
@@ -348,10 +425,10 @@ export function TeamSchedulePanel() {
                                 });
                               }}
                             >
-                              Edit
+                              수정
                             </button>
                             <button type="button" className="dangerButton" onClick={() => handleDeleteMember(member.id)}>
-                              Delete
+                              비활성화
                             </button>
                           </div>
                         </td>
@@ -359,7 +436,7 @@ export function TeamSchedulePanel() {
                     ))}
                     {members.length === 0 ? (
                       <tr>
-                        <td colSpan={6}>No members yet.</td>
+                        <td colSpan={6}>등록된 구성원이 없습니다.</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -372,12 +449,12 @@ export function TeamSchedulePanel() {
         {activeView === "schedules" ? (
           <div className="twoColumn">
             <section className="panelCard">
-              <h3>{editingScheduleId === null ? "Create schedule" : "Edit schedule"}</h3>
+              <h3>{editingScheduleId === null ? "일정 등록" : "일정 수정"}</h3>
               <form className="stackForm" onSubmit={handleScheduleSubmit}>
                 <label>
-                  Member
+                  구성원
                   <select value={scheduleForm.member_id} onChange={(event) => setScheduleForm({ ...scheduleForm, member_id: event.target.value })}>
-                    <option value="">Unassigned</option>
+                    <option value="">미배정</option>
                     {members
                       .filter((member) => member.is_active)
                       .map((member) => (
@@ -388,36 +465,40 @@ export function TeamSchedulePanel() {
                   </select>
                 </label>
                 <label>
-                  Title
+                  제목
                   <input value={scheduleForm.title} onChange={(event) => setScheduleForm({ ...scheduleForm, title: event.target.value })} required />
                 </label>
                 <label>
-                  Type
-                  <input value={scheduleForm.schedule_type} onChange={(event) => setScheduleForm({ ...scheduleForm, schedule_type: event.target.value })} />
+                  유형
+                  <input
+                    value={scheduleForm.schedule_type}
+                    onChange={(event) => setScheduleForm({ ...scheduleForm, schedule_type: event.target.value })}
+                    placeholder="예: 일반, 휴가, 출장, 근무"
+                  />
                 </label>
                 <label>
-                  Starts at
+                  시작 시간
                   <input type="datetime-local" value={scheduleForm.starts_at} onChange={(event) => setScheduleForm({ ...scheduleForm, starts_at: event.target.value })} required />
                 </label>
                 <label>
-                  Ends at
+                  종료 시간
                   <input type="datetime-local" value={scheduleForm.ends_at} onChange={(event) => setScheduleForm({ ...scheduleForm, ends_at: event.target.value })} required />
                 </label>
                 <label>
-                  Location
+                  장소
                   <input value={scheduleForm.location} onChange={(event) => setScheduleForm({ ...scheduleForm, location: event.target.value })} />
                 </label>
                 <label>
-                  Memo
+                  메모
                   <textarea value={scheduleForm.memo} onChange={(event) => setScheduleForm({ ...scheduleForm, memo: event.target.value })} rows={4} />
                 </label>
                 <div className="buttonRow">
                   <button type="submit" className="primaryButton">
-                    {editingScheduleId === null ? "Save" : "Update"}
+                    {editingScheduleId === null ? "저장" : "수정"}
                   </button>
                   {editingScheduleId !== null ? (
                     <button type="button" className="ghostButton" onClick={resetScheduleForm}>
-                      Cancel
+                      취소
                     </button>
                   ) : null}
                 </div>
@@ -425,15 +506,11 @@ export function TeamSchedulePanel() {
             </section>
 
             <section className="panelCard">
-              <h3>Schedule list</h3>
+              <h3>일정 목록</h3>
               <div className="filterBar">
-                <input
-                  placeholder="Search schedule title"
-                  value={scheduleKeyword}
-                  onChange={(event) => setScheduleKeyword(event.target.value)}
-                />
+                <input placeholder="일정 제목 검색" value={scheduleKeyword} onChange={(event) => setScheduleKeyword(event.target.value)} />
                 <select value={memberFilterId} onChange={(event) => setMemberFilterId(event.target.value)}>
-                  <option value="all">All members</option>
+                  <option value="all">전체 구성원</option>
                   {members.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name}
@@ -441,18 +518,18 @@ export function TeamSchedulePanel() {
                   ))}
                 </select>
                 <button type="button" className="ghostButton" onClick={refreshSchedules}>
-                  Apply
+                  적용
                 </button>
               </div>
               <div className="tableWrap">
                 <table className="dataTable">
                   <thead>
                     <tr>
-                      <th>Member</th>
-                      <th>Title</th>
-                      <th>Range</th>
-                      <th>Type</th>
-                      <th>Actions</th>
+                      <th>구성원</th>
+                      <th>제목</th>
+                      <th>기간</th>
+                      <th>유형</th>
+                      <th>작업</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -463,7 +540,7 @@ export function TeamSchedulePanel() {
                         <td>
                           {schedule.starts_at.replace("T", " ")} ~ {schedule.ends_at.replace("T", " ")}
                         </td>
-                        <td>{schedule.schedule_type}</td>
+                        <td>{formatScheduleTypeLabel(schedule.schedule_type)}</td>
                         <td>
                           <div className="rowActions">
                             <button
@@ -482,10 +559,10 @@ export function TeamSchedulePanel() {
                                 });
                               }}
                             >
-                              Edit
+                              수정
                             </button>
                             <button type="button" className="dangerButton" onClick={() => handleDeleteSchedule(schedule.id)}>
-                              Delete
+                              삭제
                             </button>
                           </div>
                         </td>
@@ -493,7 +570,7 @@ export function TeamSchedulePanel() {
                     ))}
                     {schedules.length === 0 ? (
                       <tr>
-                        <td colSpan={5}>No schedules yet.</td>
+                        <td colSpan={5}>등록된 일정이 없습니다.</td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -506,27 +583,27 @@ export function TeamSchedulePanel() {
         {activeView === "week" ? (
           <section className="panelCard">
             <div className="calendarHeader">
-              <h3>Weekly view</h3>
+              <div>
+                <p className="sectionEyebrow">주간 뷰</p>
+                <h3>주간 일정 보기</h3>
+                <p className="calendarSubhead">{weekLabel}</p>
+              </div>
               <div className="buttonRow">
                 <button type="button" className="ghostButton" onClick={() => setSelectedDate(addDays(selectedDate, -7))}>
-                  Previous
+                  이전
                 </button>
                 <button type="button" className="ghostButton" onClick={() => setSelectedDate(new Date())}>
-                  Today
+                  오늘
                 </button>
                 <button type="button" className="ghostButton" onClick={() => setSelectedDate(addDays(selectedDate, 7))}>
-                  Next
+                  다음
                 </button>
               </div>
             </div>
             <div className="filterBar">
-              <input
-                placeholder="Search schedule title"
-                value={scheduleKeyword}
-                onChange={(event) => setScheduleKeyword(event.target.value)}
-              />
+              <input placeholder="일정 제목 검색" value={scheduleKeyword} onChange={(event) => setScheduleKeyword(event.target.value)} />
               <select value={memberFilterId} onChange={(event) => setMemberFilterId(event.target.value)}>
-                <option value="all">All members</option>
+                <option value="all">전체 구성원</option>
                 {members.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name}
@@ -534,21 +611,27 @@ export function TeamSchedulePanel() {
                 ))}
               </select>
               <button type="button" className="ghostButton" onClick={refreshSchedules}>
-                Apply
+                적용
               </button>
             </div>
             <div className="weekGrid">
               {weekDays.map((day) => {
                 const key = formatDate(day);
                 const items = schedulesByDay.get(key) ?? [];
+                const dayLabel = day.toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", weekday: "short" });
+                const isToday = isSameDay(day, today);
                 return (
-                  <article key={key} className="dayColumn">
-                    <header>
-                      <p>{day.toLocaleDateString("en-US", { month: "numeric", day: "numeric", weekday: "short" })}</p>
+                  <article key={key} className={isToday ? "dayColumn today" : "dayColumn"}>
+                    <header className="dayColumnHeader">
+                      <p>{dayLabel}</p>
+                      <span>{items.length}건</span>
                     </header>
                     <ul>
                       {items.map((schedule) => (
-                        <li key={schedule.id}>
+                        <li
+                          key={schedule.id}
+                          className={`scheduleItem scheduleType-${normalizeScheduleTypeClass(schedule.schedule_type)}`}
+                        >
                           <strong>{schedule.title}</strong>
                           <span>
                             {schedule.starts_at.slice(11, 16)} - {schedule.ends_at.slice(11, 16)}
@@ -556,7 +639,7 @@ export function TeamSchedulePanel() {
                           <span>{resolveMemberName(schedule, members)}</span>
                         </li>
                       ))}
-                      {items.length === 0 ? <li className="emptyCell">No schedules</li> : null}
+                      {items.length === 0 ? <li className="emptyCell">일정 없음</li> : null}
                     </ul>
                   </article>
                 );
@@ -568,27 +651,35 @@ export function TeamSchedulePanel() {
         {activeView === "month" ? (
           <section className="panelCard">
             <div className="calendarHeader">
-              <h3>Monthly view</h3>
+              <div>
+                <p className="sectionEyebrow">월간 뷰</p>
+                <h3>월간 일정 보기</h3>
+                <p className="calendarSubhead">{monthLabel}</p>
+              </div>
               <div className="buttonRow">
-                <button type="button" className="ghostButton" onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}>
-                  Previous
+                <button
+                  type="button"
+                  className="ghostButton"
+                  onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
+                >
+                  이전
                 </button>
                 <button type="button" className="ghostButton" onClick={() => setSelectedDate(new Date())}>
-                  Today
+                  오늘
                 </button>
-                <button type="button" className="ghostButton" onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}>
-                  Next
+                <button
+                  type="button"
+                  className="ghostButton"
+                  onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
+                >
+                  다음
                 </button>
               </div>
             </div>
             <div className="filterBar">
-              <input
-                placeholder="Search schedule title"
-                value={scheduleKeyword}
-                onChange={(event) => setScheduleKeyword(event.target.value)}
-              />
+              <input placeholder="일정 제목 검색" value={scheduleKeyword} onChange={(event) => setScheduleKeyword(event.target.value)} />
               <select value={memberFilterId} onChange={(event) => setMemberFilterId(event.target.value)}>
-                <option value="all">All members</option>
+                <option value="all">전체 구성원</option>
                 {members.map((member) => (
                   <option key={member.id} value={member.id}>
                     {member.name}
@@ -596,7 +687,7 @@ export function TeamSchedulePanel() {
                 ))}
               </select>
               <button type="button" className="ghostButton" onClick={refreshSchedules}>
-                Apply
+                적용
               </button>
             </div>
 
@@ -605,20 +696,25 @@ export function TeamSchedulePanel() {
                 const key = formatDate(day);
                 const items = schedulesByDay.get(key) ?? [];
                 const inCurrentMonth = day.getMonth() === selectedDate.getMonth();
+                const isToday = isSameDay(day, today);
                 return (
-                  <article key={key} className={inCurrentMonth ? "monthCell" : "monthCell muted"}>
-                    <header>
+                  <article key={key} className={inCurrentMonth ? (isToday ? "monthCell today" : "monthCell") : "monthCell muted"}>
+                    <header className="monthCellHeader">
                       <strong>{day.getDate()}</strong>
+                      <span>{items.length}건</span>
                     </header>
                     <ul>
                       {items.slice(0, 3).map((schedule) => (
-                        <li key={schedule.id}>
+                        <li
+                          key={schedule.id}
+                          className={`scheduleItem scheduleType-${normalizeScheduleTypeClass(schedule.schedule_type)}`}
+                        >
                           <strong>{schedule.title}</strong>
                           <span>{schedule.starts_at.slice(11, 16)}</span>
                         </li>
                       ))}
-                      {items.length > 3 ? <li className="moreItem">+{items.length - 3} more</li> : null}
-                      {items.length === 0 ? <li className="emptyCell">No schedules</li> : null}
+                      {items.length > 3 ? <li className="moreItem">+{items.length - 3}건 더 있음</li> : null}
+                      {items.length === 0 ? <li className="emptyCell">일정 없음</li> : null}
                     </ul>
                   </article>
                 );

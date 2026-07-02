@@ -1,11 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import {
-  collectNews,
-  fetchNews,
-  fetchNewsCrawlRuns,
-  type NewsArticle,
-  type NewsCrawlRun,
-} from "./api";
+import { collectNews, fetchNews, fetchNewsCrawlRuns, type NewsArticle, type NewsCrawlRun } from "./api";
 
 function getYesterday(): string {
   const date = new Date();
@@ -29,7 +23,7 @@ export function NewsPanel() {
 
   useEffect(() => {
     refresh().catch((fetchError: unknown) => {
-      setError(fetchError instanceof Error ? fetchError.message : "Failed to load policy news.");
+      setError(fetchError instanceof Error ? fetchError.message : "뉴스 데이터를 불러오지 못했습니다.");
     });
   }, []);
 
@@ -42,9 +36,9 @@ export function NewsPanel() {
       const result = await collectNews(targetDate, true);
       setArticles(result.items);
       await refresh(targetDate);
-      setMessage(`Collected ${result.success_count} articles for ${result.target_date}.`);
+      setMessage(`${result.target_date} 기준 기사 ${result.success_count}건을 수집했습니다.`);
     } catch (collectError) {
-      setError(collectError instanceof Error ? collectError.message : "Failed to collect policy news.");
+      setError(collectError instanceof Error ? collectError.message : "뉴스 수집에 실패했습니다.");
     } finally {
       setLoading(false);
     }
@@ -53,29 +47,29 @@ export function NewsPanel() {
   return (
     <section className="newsCollector">
       <header className="sectionHeader">
-        <p className="sectionEyebrow">Policy News</p>
+        <p className="sectionEyebrow">뉴스 수집</p>
         <div>
-          <h2 className="sectionTitle">대한민국 정책브리핑 수집</h2>
+          <h2 className="sectionTitle">공공 행정 뉴스 수집</h2>
           <p className="sectionDescription">
-            Select a date and collect policy news from korea.kr. The backend also runs the previous-day crawl every day at 09:00.
+            날짜를 지정하면 공공 행정 관련 뉴스를 모아 보여줍니다. 백엔드는 매일 아침 자동 수집을 기준으로 동작합니다.
           </p>
         </div>
       </header>
 
       <form className="collectorBar" onSubmit={handleCollect}>
         <label>
-          Target date
+          대상 날짜
           <input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} required />
         </label>
         <button type="submit" className="primaryButton" disabled={loading}>
-          {loading ? "Collecting..." : "Collect"}
+          {loading ? "수집 중..." : "수집하기"}
         </button>
         <button
           type="button"
           className="ghostButton"
-          onClick={() => refresh().catch((refreshError: unknown) => setError(refreshError instanceof Error ? refreshError.message : "Failed to refresh."))}
+          onClick={() => refresh().catch((refreshError: unknown) => setError(refreshError instanceof Error ? refreshError.message : "새로고침에 실패했습니다."))}
         >
-          Refresh
+          새로고침
         </button>
       </form>
 
@@ -84,45 +78,45 @@ export function NewsPanel() {
 
       <div className="newsGrid">
         <section className="panelCard">
-          <h3>Collected articles</h3>
+          <h3>수집된 기사</h3>
           <div className="articleList">
             {articles.map((article) => (
               <article key={article.id} className="articleItem">
                 <div>
                   <strong>{article.title}</strong>
-                  <p>{article.summary ?? "No summary available."}</p>
+                  <p>{article.summary ?? "요약 정보가 없습니다."}</p>
                 </div>
                 <dl>
                   <div>
-                    <dt>Agency</dt>
+                    <dt>기관</dt>
                     <dd>{article.agency ?? "-"}</dd>
                   </div>
                   <div>
-                    <dt>Published</dt>
+                    <dt>게시일</dt>
                     <dd>{article.published_at ?? "-"}</dd>
                   </div>
                 </dl>
                 {article.url ? (
                   <a href={article.url} target="_blank" rel="noreferrer">
-                    Open source
+                    원문 보기
                   </a>
                 ) : null}
               </article>
             ))}
-            {articles.length === 0 ? <p className="probeText">No articles collected for this date.</p> : null}
+            {articles.length === 0 ? <p className="probeText">해당 날짜에 수집된 기사가 없습니다.</p> : null}
           </div>
         </section>
 
         <section className="panelCard">
-          <h3>Crawl runs</h3>
+          <h3>수집 실행 기록</h3>
           <div className="tableWrap">
             <table className="dataTable">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Saved</th>
-                  <th>Failed</th>
+                  <th>날짜</th>
+                  <th>상태</th>
+                  <th>성공</th>
+                  <th>실패</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,7 +130,7 @@ export function NewsPanel() {
                 ))}
                 {runs.length === 0 ? (
                   <tr>
-                    <td colSpan={4}>No crawl runs yet.</td>
+                    <td colSpan={4}>아직 수집 기록이 없습니다.</td>
                   </tr>
                 ) : null}
               </tbody>

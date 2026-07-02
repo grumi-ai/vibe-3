@@ -16,7 +16,26 @@ def init_db() -> None:
 
     with get_connection() as connection:
         connection.executescript(schema_path.read_text(encoding="utf-8"))
+        _ensure_member_columns(connection)
         _ensure_news_article_columns(connection)
+
+
+def _ensure_member_columns(connection: sqlite3.Connection) -> None:
+    existing_columns = {
+        row["name"] for row in connection.execute("pragma table_info(members)").fetchall()
+    }
+    required_columns = {
+        "department": "text",
+        "role": "text",
+        "phone": "text",
+        "memo": "text",
+        "is_active": "integer not null default 1",
+        "updated_at": "datetime not null default current_timestamp",
+    }
+
+    for column, definition in required_columns.items():
+        if column not in existing_columns:
+            connection.execute(f"alter table members add column {column} {definition}")
 
 
 def _ensure_news_article_columns(connection: sqlite3.Connection) -> None:

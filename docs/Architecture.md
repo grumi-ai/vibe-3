@@ -1,13 +1,14 @@
-# 공공직군 행정업무 슈퍼앱 기술 아키텍처
+# 공공직군 행정업무 슈퍼앱 기술 요구사항 및 구조
 
 ## 1. 기술 스택
 
-- Frontend: TypeScript + Vite + React
-- Backend: Python + FastAPI
-- Python 패키지 관리: `uv`
+- Frontend: React, TypeScript, Vite
+- Backend: FastAPI, Python
 - Database: SQLite
+- Scheduler: APScheduler
+- 뉴스 크롤링: requests, BeautifulSoup4
 
-## 2. 시스템 구조
+## 2. 전체 구조
 
 ```text
 day3_rpa/
@@ -16,130 +17,84 @@ day3_rpa/
       app/
       pages/
       features/
-        team-schedule/
-        excel-automation/
-        complaint-chatbot/
-        news/
       shared/
-        api/
-        components/
-        styles/
-        utils/
   backend/
     app/
       api/
         routes/
       core/
+      crawlers/
+      jobs/
       models/
       repositories/
       schemas/
       services/
-      jobs/
-      crawlers/
+      storage/
   docs/
 ```
 
-## 3. 모듈 역할
+## 3. 프론트엔드 모듈 역할
 
-### 3.1 Frontend
+- `pages/DashboardPage.tsx`
+  - 전체 화면의 통합 진입점
+  - 연결 상태, 일정, 엑셀, 민원, 뉴스 섹션을 배치
+- `features/team-schedule`
+  - 구성원과 일정 CRUD
+  - 주간/월간 캘린더 뷰
+- `features/excel-automation`
+  - 파일 업로드, 분할, 병합 UI
+- `features/complaint-chatbot`
+  - 민원 매뉴얼 업로드와 질문 기반 답변 초안 생성
+- `features/news`
+  - 정책 뉴스 수집 UI와 실행 이력 표시
+- `shared/api`
+  - 백엔드 호출 공통화
+- `shared/components`
+  - 연결 상태, 백엔드 URL 설정, 기능 스캐폴드
 
-- `pages`: 전체 화면 조합, 대시보드, 통합 상태 확인
-- `features/team-schedule`: 팀원 CRUD, 일정 CRUD, 주간/월간 뷰
-- `features/excel-automation`: 파일 업로드, 분리/병합 UI
-- `features/complaint-chatbot`: 매뉴얼 업로드, 질문 입력, 응답 표시
-- `features/news`: 기사 목록, 수집 상태, 키워드 확인
-- `shared/api`: 공통 API 클라이언트와 health 체크
-- `shared/components`: 공통 카드, 상태 표시, 설정 패널
-- `shared/utils`: 날짜 계산, 포맷 변환, 범위 계산
+## 4. 백엔드 모듈 역할
 
-### 3.2 Backend
+- `api/routes`
+  - HTTP 엔드포인트 등록
+- `services`
+  - 비즈니스 로직
+- `repositories`
+  - SQLite 접근과 CRUD
+- `schemas`
+  - 요청/응답 모델
+- `core/database.py`
+  - DB 초기화 및 마이그레이션 보정
+- `jobs/scheduler.py`
+  - 뉴스 수집 스케줄러
+- `crawlers/korea_policy_briefing.py`
+  - 정책 뉴스 수집기
 
-- `api/routes`: HTTP 엔드포인트 정의
-- `services`: 비즈니스 로직 처리
-- `repositories`: SQLite CRUD 및 조회 처리
-- `schemas`: 요청/응답 모델 검증
-- `models`: 테이블 스키마 정의
-- `jobs`: 정기 수집, 스케줄 실행
-- `crawlers`: 뉴스 원천 수집 로직
-
-## 4. 데이터 모델
+## 5. 주요 데이터 모델
 
 ### members
 
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 팀원 ID |
-| name | text | 이름 |
-| department | text | 부서 |
-| role | text | 역할 |
-| phone | text | 연락처 |
-| memo | text | 메모 |
-| is_active | integer | 활성 여부 |
-| created_at | datetime | 생성 시각 |
-| updated_at | datetime | 수정 시각 |
+- 구성원 기본 정보와 활성 상태를 저장한다.
+- `phone`, `memo`, `is_active`, `created_at`, `updated_at`를 포함한다.
 
 ### schedules
 
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 일정 ID |
-| member_id | integer | 팀원 ID, 미지정 가능 |
-| title | text | 일정 제목 |
-| schedule_type | text | 휴가, 근무, 출장 등 |
-| starts_at | datetime | 시작 시각 |
-| ends_at | datetime | 종료 시각 |
-| location | text | 장소 |
-| memo | text | 메모 |
+- 구성원별 일정 정보를 저장한다.
+- `member_id`는 선택값이며 미배정 일정도 허용한다.
 
 ### complaint_manuals
 
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 매뉴얼 ID |
-| filename | text | 원본 파일명 |
-| content_text | text | 추출 텍스트 |
-| uploaded_at | datetime | 업로드 시각 |
+- 민원 매뉴얼 파일명과 추출 텍스트를 저장한다.
+- 업로드 파일은 PDF, DOCX, TXT, MD, CSV, JSON, LOG를 우선 지원한다.
 
 ### complaint_chat_logs
 
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 로그 ID |
-| question | text | 질문 |
-| answer | text | 응답 |
-| created_at | datetime | 생성 시각 |
+- 질문과 생성된 답변 초안을 기록한다.
 
-### news_articles
+### news_articles / news_crawl_runs
 
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 기사 ID |
-| title | text | 제목 |
-| source | text | 출처 |
-| agency | text | 기관 |
-| url | text | 기사 링크 |
-| summary | text | 요약 |
-| content | text | 본문 또는 발췌 |
-| keyword | text | 수집 키워드 |
-| published_at | datetime | 게시 시각 |
-| target_date | text | 수집 기준일 |
-| collected_at | datetime | 수집 시각 |
+- 뉴스 본문과 수집 실행 이력을 저장한다.
 
-### news_crawl_runs
-
-| 컬럼 | 타입 | 설명 |
-| --- | --- | --- |
-| id | integer | 실행 ID |
-| target_date | text | 대상 날짜 |
-| status | text | 성공/실패 상태 |
-| total_count | integer | 총 수집 건수 |
-| success_count | integer | 성공 건수 |
-| failed_count | integer | 실패 건수 |
-| error_message | text | 오류 메시지 |
-| started_at | datetime | 시작 시각 |
-| finished_at | datetime | 종료 시각 |
-
-## 5. API 개요
+## 6. API 요약
 
 ### Health
 
@@ -148,49 +103,45 @@ day3_rpa/
 
 ### Team Schedule
 
-- `GET /api/members?keyword=&isActive=`
+- `GET /api/members`
 - `POST /api/members`
-- `GET /api/members/{member_id}`
 - `PUT /api/members/{member_id}`
 - `DELETE /api/members/{member_id}`
-- `GET /api/schedules?start=&end=&memberId=&keyword=`
+- `GET /api/schedules`
 - `POST /api/schedules`
-- `GET /api/schedules/{schedule_id}`
 - `PUT /api/schedules/{schedule_id}`
 - `DELETE /api/schedules/{schedule_id}`
 
 ### Excel Automation
 
+- `POST /api/excel/upload`
 - `POST /api/excel/split`
 - `POST /api/excel/merge`
 - `GET /api/excel/download/{file_id}`
 
 ### Complaint Chatbot
 
-- `POST /api/complaints/manuals`
 - `GET /api/complaints/manuals`
+- `POST /api/complaints/manuals`
+- `POST /api/complaints/manuals/upload`
 - `POST /api/complaints/chat`
 
 ### News
 
-- `GET /api/news?targetDate=`
+- `GET /api/news`
 - `POST /api/news/collect`
-- `GET /api/news/keywords`
 - `GET /api/news/crawl-runs`
+- `GET /api/news/keywords`
 
-## 6. 데이터 흐름
+## 7. 동작 흐름
 
-1. 사용자가 FE에서 팀원 또는 일정 정보를 입력한다.
-2. FE는 공통 API 클라이언트를 통해 FastAPI 엔드포인트를 호출한다.
-3. 서비스 계층이 입력값 검증과 비즈니스 규칙을 처리한다.
-4. 저장소 계층이 SQLite에 읽기/쓰기 작업을 수행한다.
-5. 응답은 FE로 돌아가고, 화면은 즉시 갱신된다.
+1. 프론트엔드가 공통 API 클라이언트를 통해 백엔드에 요청한다.
+2. 백엔드는 서비스 레이어에서 입력 검증과 비즈니스 로직을 수행한다.
+3. 레포지토리가 SQLite에 읽기/쓰기 작업을 처리한다.
+4. 결과는 JSON 또는 다운로드 파일로 프론트엔드에 반환된다.
 
-## 7. 운영 방향
+## 8. 설계 의도
 
-- SQLite 기반 MVP로 시작한다.
-- 저장 데이터가 늘어나면 PostgreSQL로 이전할 수 있도록 레이어를 분리한다.
-- 뉴스 수집과 같은 배치성 작업은 `jobs` 계층에서 관리한다.
-- FE-BE, BE-DB 점검용 health endpoint를 유지한다.
-- 민원 챗봇은 추후 외부 LLM 연동으로 확장 가능하도록 인터페이스를 분리한다.
-
+- 스캐폴드 단계에서 기능을 모듈 단위로 분리해 후속 확장을 쉽게 한다.
+- SQLite 기반 로컬 MVP로 시작하되, DB 교체가 가능하도록 계층을 나눴다.
+- 민원 챗봇은 초기에는 매뉴얼 검색 기반 응답으로 구현하고, 추후 LLM 연동으로 확장 가능하다.

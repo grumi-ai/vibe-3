@@ -8,7 +8,8 @@ type Props = {
 export function ConnectionStatusCard({ health, error }: Props) {
   return (
     <aside className="statusCard">
-      <h2>연결 확인</h2>
+      <p className="label">실시간 상태</p>
+      <h2>연결 상태 확인</h2>
       {health ? (
         <dl>
           <div>

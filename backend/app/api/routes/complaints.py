@@ -1,4 +1,4 @@
-from app.schemas.complaint import ComplaintChatRequest, ComplaintChatResponse, ManualCreate
+from app.schemas.complaint import ComplaintChatRequest, ComplaintChatResponse, ManualCreate, ManualUploadRead, ManualUploadRequest
 from app.services import complaint_service
 
 
@@ -8,6 +8,10 @@ def list_manuals() -> dict[str, object]:
 
 def create_manual(payload: ManualCreate) -> dict[str, object]:
     return complaint_service.create_manual(payload)
+
+
+def upload_manual(payload: ManualUploadRequest) -> ManualUploadRead:
+    return complaint_service.upload_manual(payload)
 
 
 def create_chat_response(payload: ComplaintChatRequest) -> ComplaintChatResponse:

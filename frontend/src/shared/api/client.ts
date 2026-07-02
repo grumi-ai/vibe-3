@@ -59,11 +59,7 @@ export async function apiGet<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function apiJson<T>(
-  path: string,
-  method: "POST" | "PUT" | "DELETE",
-  body?: unknown,
-): Promise<T> {
+export async function apiJson<T>(path: string, method: "POST" | "PUT" | "DELETE", body?: unknown): Promise<T> {
   const response = await fetch(buildApiUrl(path), {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
@@ -71,7 +67,7 @@ export async function apiJson<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`${path} ?묐떟 ?ㅻ쪟: ${response.status}`);
+    throw new Error(`${path} 처리 오류: ${response.status}`);
   }
 
   if (response.status === 204) {

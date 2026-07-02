@@ -20,7 +20,7 @@ export function FeatureScaffold({ badge, title, description, apiEndpoint, items,
         {children}
       </section>
       <section className="featureCard muted">
-        <h3>스캐폴드 범위</h3>
+        <h3>구현 범위</h3>
         <ul>
           {items.map((item) => (
             <li key={item}>{item}</li>
