@@ -4,8 +4,13 @@ from app.schemas.schedule import ScheduleCreate, ScheduleRead, ScheduleUpdate
 from app.services import schedule_service
 
 
-def list_schedules() -> dict[str, object]:
-    return {"items": schedule_service.list_schedules()}
+def list_schedules(
+    start: str | None = None,
+    end: str | None = None,
+    memberId: int | None = None,
+    keyword: str | None = None,
+) -> dict[str, object]:
+    return {"items": schedule_service.list_schedules(start, end, memberId, keyword)}
 
 
 def create_schedule(payload: ScheduleCreate) -> ScheduleRead:

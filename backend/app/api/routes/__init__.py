@@ -1,11 +1,21 @@
 from fastapi import FastAPI
 
-from app.api.routes import complaints, excel, health, news, schedules
+from app.api.routes import complaints, excel, health, members, news, schedules
 
 
 def register_routes(app: FastAPI) -> None:
     app.add_api_route("/api/health", health.read_health, methods=["GET"], tags=["health"])
     app.add_api_route("/api/db/health", health.read_database_health, methods=["GET"], tags=["health"])
+    app.add_api_route("/api/members", members.list_members, methods=["GET"], tags=["members"])
+    app.add_api_route("/api/members", members.create_member, methods=["POST"], tags=["members"])
+    app.add_api_route("/api/members/{member_id}", members.get_member, methods=["GET"], tags=["members"])
+    app.add_api_route("/api/members/{member_id}", members.update_member, methods=["PUT"], tags=["members"])
+    app.add_api_route(
+        "/api/members/{member_id}",
+        members.delete_member,
+        methods=["DELETE"],
+        tags=["members"],
+    )
     app.add_api_route("/api/schedules", schedules.list_schedules, methods=["GET"], tags=["schedules"])
     app.add_api_route("/api/schedules", schedules.create_schedule, methods=["POST"], tags=["schedules"])
     app.add_api_route(

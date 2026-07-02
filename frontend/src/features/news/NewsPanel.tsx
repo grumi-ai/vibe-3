@@ -7,21 +7,24 @@ export function NewsPanel() {
   const [keywords, setKeywords] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchNews().then((data) => setArticles(data.items)).catch(() => setArticles([]));
-    fetchNewsKeywords().then((data) => setKeywords(data.items)).catch(() => setKeywords([]));
+    fetchNews()
+      .then((data) => setArticles(data.items))
+      .catch(() => setArticles([]));
+
+    fetchNewsKeywords()
+      .then((data) => setKeywords(data.items))
+      .catch(() => setKeywords([]));
   }, []);
 
   return (
     <FeatureScaffold
       badge="News"
-      title="뉴스 기사 수집"
-      description="공공 행정 관련 뉴스를 매일 아침 수집하고 날짜, 키워드로 조회하는 영역입니다."
-      apiEndpoint="GET /api/news, POST /api/news/collect"
-      items={["수집 키워드 관리", "뉴스 목록 조회", "원문 링크 이동"]}
+      title="뉴스 수집"
+      description="수집된 뉴스와 키워드 상태를 한 화면에서 확인하는 구조를 먼저 배치한다."
+      apiEndpoint="GET /api/news, GET /api/news/keywords"
+      items={["수집 뉴스 목록", "키워드 필터", "수집 실행", "원문 링크 이동"]}
     >
-      <p className="probeText">
-        현재 DB 기사 {articles.length}건, 키워드 {keywords.length}개 조회됨
-      </p>
+      <p className="probeText">현재 DB 뉴스 {articles.length}건, 키워드 {keywords.length}건을 조회했다.</p>
     </FeatureScaffold>
   );
 }

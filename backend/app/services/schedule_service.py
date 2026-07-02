@@ -2,8 +2,13 @@ from app.repositories import schedule_repository
 from app.schemas.schedule import ScheduleCreate, ScheduleRead, ScheduleUpdate
 
 
-def list_schedules() -> list[ScheduleRead]:
-    return [ScheduleRead(**item) for item in schedule_repository.list_schedules()]
+def list_schedules(
+    start: str | None = None,
+    end: str | None = None,
+    member_id: int | None = None,
+    keyword: str | None = None,
+) -> list[ScheduleRead]:
+    return [ScheduleRead(**item) for item in schedule_repository.list_schedules(start, end, member_id, keyword)]
 
 
 def create_schedule(payload: ScheduleCreate) -> ScheduleRead:

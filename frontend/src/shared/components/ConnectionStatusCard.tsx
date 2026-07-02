@@ -8,7 +8,7 @@ type Props = {
 export function ConnectionStatusCard({ health, error }: Props) {
   return (
     <aside className="statusCard">
-      <h2>연동 확인</h2>
+      <h2>연결 확인</h2>
       {health ? (
         <dl>
           <div>
@@ -24,12 +24,16 @@ export function ConnectionStatusCard({ health, error }: Props) {
             <dd>{health.database.sqlite_version}</dd>
           </div>
           <div>
-            <dt>DB 파일</dt>
+            <dt>DB 경로</dt>
             <dd className="pathText">{health.database.database_path}</dd>
+          </div>
+          <div>
+            <dt>DB 테이블 수</dt>
+            <dd>{health.database.tables.length}</dd>
           </div>
         </dl>
       ) : (
-        <p className="errorText">{error ?? "상태 확인 중"}</p>
+        <p className="errorText">{error ?? "상태를 확인하는 중입니다."}</p>
       )}
     </aside>
   );

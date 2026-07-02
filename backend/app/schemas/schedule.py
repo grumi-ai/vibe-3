@@ -26,4 +26,5 @@ class ScheduleUpdate(BaseModel):
 
 
 class ScheduleRead(ScheduleBase):
-    id: int
+  id: int
+  member_name: str | None = None

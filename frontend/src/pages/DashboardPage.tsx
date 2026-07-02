@@ -1,22 +1,13 @@
 import { useEffect, useState } from "react";
-import { ComplaintChatbotPanel } from "../features/complaint-chatbot/ComplaintChatbotPanel";
-import { ExcelAutomationPanel } from "../features/excel-automation/ExcelAutomationPanel";
-import { NewsPanel } from "../features/news/NewsPanel";
-import { SchedulePanel } from "../features/schedule/SchedulePanel";
-import { getSystemHealth, type SystemHealth } from "../shared/api/health";
+import { TeamSchedulePanel } from "../features/team-schedule/TeamSchedulePanel";
+import { getDatabaseHealth, getSystemHealth, type DatabaseHealth, type SystemHealth } from "../shared/api/health";
 import { ConnectionStatusCard } from "../shared/components/ConnectionStatusCard";
 
-const features = [
-  { id: "schedule", label: "팀원 스케쥴", component: <SchedulePanel /> },
-  { id: "excel", label: "엑셀 자동화", component: <ExcelAutomationPanel /> },
-  { id: "complaints", label: "민원 챗봇", component: <ComplaintChatbotPanel /> },
-  { id: "news", label: "뉴스 수집", component: <NewsPanel /> }
-];
-
 export function DashboardPage() {
-  const [activeFeature, setActiveFeature] = useState(features[0].id);
   const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [databaseHealth, setDatabaseHealth] = useState<DatabaseHealth | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
+  const [databaseError, setDatabaseError] = useState<string | null>(null);
 
   useEffect(() => {
     getSystemHealth()
@@ -26,40 +17,125 @@ export function DashboardPage() {
       })
       .catch((error: unknown) => {
         setHealth(null);
-        setHealthError(error instanceof Error ? error.message : "API 연결 실패");
+        setHealthError(error instanceof Error ? error.message : "FE-BE connection failed");
+      });
+
+    getDatabaseHealth()
+      .then((data) => {
+        setDatabaseHealth(data);
+        setDatabaseError(null);
+      })
+      .catch((error: unknown) => {
+        setDatabaseHealth(null);
+        setDatabaseError(error instanceof Error ? error.message : "BE-DB connection failed");
       });
   }, []);
 
-  const currentFeature = features.find((feature) => feature.id === activeFeature);
-
   return (
-    <main className="shell">
+    <main className="shell scaffoldShell">
       <section className="hero">
         <div>
           <p className="eyebrow">PUBLIC ADMIN SUPER APP</p>
-          <h1>공공직군 행정업무 슈퍼앱</h1>
+          <h1>Team schedule scaffold</h1>
           <p className="lead">
-            PRD와 Architecture 문서 기준의 스캐폴드입니다. 기능 구현 전 페이지 구조,
-            FE-BE 연결, BE-DB 연결을 확인하는 데 집중합니다.
+            Build the member schedule workflow first, then wire FE-BE and BE-DB checks on the same page.
           </p>
         </div>
         <ConnectionStatusCard health={health} error={healthError} />
       </section>
 
-      <nav className="tabBar" aria-label="기능 페이지">
-        {features.map((feature) => (
-          <button
-            className={feature.id === activeFeature ? "tab active" : "tab"}
-            key={feature.id}
-            onClick={() => setActiveFeature(feature.id)}
-            type="button"
-          >
-            {feature.label}
-          </button>
-        ))}
-      </nav>
+      <section className="scaffoldSection">
+        <TeamSchedulePanel />
+      </section>
 
-      <section className="pagePanel">{currentFeature?.component}</section>
+      <section className="scaffoldSection">
+        <header className="sectionHeader">
+          <p className="sectionEyebrow">FE-BE Check</p>
+          <div>
+            <h2 className="sectionTitle">FE-BE connection</h2>
+            <p className="sectionDescription">Confirm the frontend can call the backend health endpoint.</p>
+          </div>
+        </header>
+        <div className="integrationGrid">
+          <article className="statusDetailCard">
+            <h3>Connection state</h3>
+            {health ? (
+              <dl className="statusGrid">
+                <div>
+                  <dt>Service</dt>
+                  <dd>{health.service}</dd>
+                </div>
+                <div>
+                  <dt>FE-BE</dt>
+                  <dd>{health.status}</dd>
+                </div>
+                <div className="wide">
+                  <dt>Endpoint</dt>
+                  <dd>/api/health</dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="errorText">{healthError ?? "Connection state is unavailable."}</p>
+            )}
+          </article>
+
+          <article className="statusDetailCard">
+            <h3>Check list</h3>
+            <ul className="bulletList">
+              <li>Frontend calls the health API on load.</li>
+              <li>Error messages are shown when the call fails.</li>
+              <li>Shared API client is reused by feature screens.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="scaffoldSection">
+        <header className="sectionHeader">
+          <p className="sectionEyebrow">BE-DB Check</p>
+          <div>
+            <h2 className="sectionTitle">BE-DB connection</h2>
+            <p className="sectionDescription">Confirm SQLite schema and table information are returned by the backend.</p>
+          </div>
+        </header>
+        <div className="integrationGrid">
+          <article className="statusDetailCard">
+            <h3>DB state</h3>
+            {databaseHealth ? (
+              <dl className="statusGrid">
+                <div>
+                  <dt>Status</dt>
+                  <dd>{databaseHealth.status}</dd>
+                </div>
+                <div>
+                  <dt>SQLite</dt>
+                  <dd>{databaseHealth.sqlite_version}</dd>
+                </div>
+                <div className="wide">
+                  <dt>DB path</dt>
+                  <dd className="pathText">{databaseHealth.database_path}</dd>
+                </div>
+                <div className="wide">
+                  <dt>Tables</dt>
+                  <dd>{databaseHealth.tables.join(", ")}</dd>
+                </div>
+              </dl>
+            ) : (
+              <p className="errorText">{databaseError ?? "Database state is unavailable."}</p>
+            )}
+          </article>
+
+          <article className="statusDetailCard">
+            <h3>Check list</h3>
+            <ul className="bulletList">
+              <li>SQLite version is returned.</li>
+              <li>Current DB file path is shown.</li>
+              <li>Table list is returned from sqlite_master.</li>
+              <li>health check rows are inserted into the DB.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }

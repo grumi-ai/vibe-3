@@ -9,6 +9,10 @@ create table if not exists members (
   name text not null,
   department text,
   role text,
+  phone text,
+  memo text,
+  is_active integer not null default 1,
+  updated_at datetime not null default current_timestamp,
   created_at datetime not null default current_timestamp
 );
 
