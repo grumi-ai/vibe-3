@@ -3,6 +3,7 @@ import { apiGet, apiJson } from "../../shared/api/client";
 export type MemberItem = {
   id: number;
   name: string;
+  department: string | null;
   role: string | null;
   phone: string | null;
   memo: string | null;
@@ -25,6 +26,7 @@ export type ScheduleItem = {
 
 export type MemberPayload = {
   name: string;
+  department: string;
   role: string;
   phone: string;
   memo: string;

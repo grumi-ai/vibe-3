@@ -3,17 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>공공직군 행정업무 슈퍼앱 문서 요약</title>
+    <title>공공직군 행정업무 슈퍼앱 문서 종합본</title>
     <style>
       :root {
-        --bg: #f7f1e7;
-        --panel: #fffaf0;
-        --ink: #17211b;
-        --muted: #5f675f;
-        --line: #d8cdbb;
-        --green: #1f5f43;
-        --blue: #245b7d;
-        --amber: #b46a1f;
+        --bg: #f4efe6;
+        --panel: rgba(255, 251, 243, 0.9);
+        --ink: #16211c;
+        --muted: #59655d;
+        --line: #d9cab6;
+        --green: #1d5b42;
+        --blue: #295c7a;
+        --amber: #b36a1e;
       }
 
       * {
@@ -24,9 +24,9 @@
         margin: 0;
         color: var(--ink);
         background:
-          radial-gradient(circle at 10% 10%, rgba(180, 106, 31, 0.16), transparent 28rem),
-          radial-gradient(circle at 90% 0%, rgba(36, 91, 125, 0.16), transparent 26rem),
-          linear-gradient(135deg, #f7f1e7 0%, #ece4d5 100%);
+          radial-gradient(circle at 15% 10%, rgba(29, 91, 66, 0.14), transparent 28rem),
+          radial-gradient(circle at 85% 0%, rgba(41, 92, 122, 0.14), transparent 24rem),
+          linear-gradient(135deg, #f4efe6 0%, #ebe2d4 100%);
         font-family: "Segoe UI", "Malgun Gothic", sans-serif;
         line-height: 1.6;
       }
@@ -41,7 +41,7 @@
 
       h1 {
         margin: 14px 0 12px;
-        font-size: clamp(36px, 6vw, 72px);
+        font-size: clamp(36px, 5.5vw, 72px);
         line-height: 0.98;
         letter-spacing: -0.05em;
         font-family: Georgia, "Times New Roman", serif;
@@ -49,20 +49,18 @@
 
       .eyebrow {
         display: inline-flex;
-        gap: 8px;
-        align-items: center;
         padding: 6px 10px;
         border: 1px solid var(--line);
         border-radius: 999px;
+        background: rgba(255, 251, 243, 0.75);
         color: var(--green);
-        background: rgba(255, 250, 240, 0.72);
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.04em;
       }
 
       .lead {
-        max-width: 840px;
+        max-width: 900px;
         margin: 0;
         color: var(--muted);
         font-size: 18px;
@@ -78,28 +76,8 @@
         padding: 24px;
         border: 1px solid var(--line);
         border-radius: 24px;
-        background: rgba(255, 250, 240, 0.82);
+        background: var(--panel);
         box-shadow: 0 18px 60px rgba(40, 31, 20, 0.08);
-      }
-
-      .link-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 20px 0 0;
-      }
-
-      .link-row a {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        color: var(--ink);
-        background: #fffdf7;
-        text-decoration: none;
-        font-weight: 700;
       }
 
       .span-4 {
@@ -124,10 +102,6 @@
         font-family: Georgia, "Times New Roman", serif;
       }
 
-      h3 {
-        font-size: 20px;
-      }
-
       p,
       li,
       td,
@@ -135,13 +109,32 @@
         font-size: 15px;
       }
 
-      ul {
+      ul,
+      ol {
         margin: 0;
         padding-left: 20px;
       }
 
       li + li {
         margin-top: 8px;
+      }
+
+      .link-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .link-row a {
+        display: inline-flex;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink);
+        background: #fffdf7;
+        text-decoration: none;
+        font-weight: 700;
       }
 
       .pill-list {
@@ -207,6 +200,20 @@
         background: var(--amber);
       }
 
+      .status-list {
+        list-style: none;
+        padding: 0;
+      }
+
+      .status-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .small {
+        color: var(--muted);
+      }
+
       @media (max-width: 900px) {
         .span-4,
         .span-6,
@@ -219,10 +226,10 @@
   <body>
     <header>
       <span class="eyebrow">PUBLIC ADMIN SUPER APP</span>
-      <h1>공공직군 행정업무 슈퍼앱 문서 요약</h1>
+      <h1>공공직군 행정업무 슈퍼앱 문서 종합본</h1>
       <p class="lead">
-        팀원 일정 관리, 엑셀 자동화, 민원 대응 챗봇, 뉴스 수집 기능을 포함한 내부 행정업무 슈퍼앱의
-        요구사항, 구조, 운영 내용을 한눈에 볼 수 있도록 정리한 페이지다.
+        팀원 일정 관리, 엑셀 업무 자동화, 민원 대응 챗봇, 뉴스 기사 수집의 요구사항과 아키텍처,
+        운영 방법을 한눈에 볼 수 있도록 정리한 문서 허브입니다.
       </p>
       <div class="link-row">
         <a href="PRD.md">PRD.md</a>
@@ -235,88 +242,84 @@
       <section class="grid">
         <article class="card span-4 feature green">
           <h2>PRD</h2>
-          <p>기능 요구서. 무엇을 만들고 어떤 기준으로 완료할지 정의한다.</p>
+          <p>무엇을 만들지 정의한 기능 요구서입니다.</p>
           <ul>
-            <li>팀원 스케줄 관리</li>
+            <li>팀원 일정 관리</li>
             <li>엑셀 업무 자동화</li>
             <li>민원 대응 챗봇</li>
             <li>뉴스 기사 수집</li>
           </ul>
-          <p><a href="PRD.md">문서 열기</a></p>
         </article>
 
         <article class="card span-4 feature blue">
           <h2>Architecture</h2>
-          <p>기술적 요구사항, 프로젝트 구조, 모듈별 역할을 정의한다.</p>
+          <p>어떤 기술과 구조로 구현할지 정리한 문서입니다.</p>
           <ul>
             <li>Frontend: React + TypeScript + Vite</li>
             <li>Backend: Python + FastAPI</li>
             <li>Database: SQLite</li>
-            <li>공통 모듈: API, 컴포넌트, 유틸</li>
+            <li>레이어 분리: routes / services / repositories</li>
           </ul>
-          <p><a href="Architecture.md">문서 열기</a></p>
         </article>
 
         <article class="card span-4 feature amber">
           <h2>Operation</h2>
-          <p>실행 방법, 자주 발생하는 에러, 사용법을 정리한다.</p>
+          <p>실행 방법과 자주 발생하는 문제를 정리한 문서입니다.</p>
           <ul>
-            <li>백엔드 실행</li>
-            <li>프론트엔드 실행</li>
+            <li>Backend 실행</li>
+            <li>Frontend 실행</li>
             <li>접속 주소</li>
-            <li>운영 점검 항목</li>
+            <li>오류 대응</li>
           </ul>
-          <p><a href="Operation.md">문서 열기</a></p>
         </article>
 
         <article class="card span-6">
           <h3>핵심 기능</h3>
           <ul class="pill-list">
-            <li>팀원 스케줄 관리</li>
-            <li>주간 뷰</li>
-            <li>월간 뷰</li>
+            <li>팀원 등록/수정/삭제</li>
+            <li>주간 뷰: 리스트 형식</li>
+            <li>월간 뷰: 캘린더 형식</li>
             <li>엑셀 분리/병합</li>
             <li>민원 매뉴얼 기반 챗봇</li>
-            <li>뉴스 기사 자동 수집</li>
+            <li>공공행정 뉴스 수집</li>
           </ul>
         </article>
 
         <article class="card span-6">
-          <h3>권장 구현 순서</h3>
-          <ol>
-            <li>문서 확정</li>
-            <li>DB와 API 설계</li>
-            <li>팀원 일정 관리</li>
-            <li>엑셀 자동화</li>
-            <li>민원 챗봇</li>
-            <li>뉴스 수집</li>
-          </ol>
+          <h3>문서 상태 점검</h3>
+          <ul class="status-list">
+            <li>문서 저장 위치: <code>docs/</code></li>
+            <li>문서 구성: <code>PRD.md</code>, <code>Architecture.md</code>, <code>Operation.md</code></li>
+            <li>종합본: <code>index.html</code></li>
+            <li>인코딩: UTF-8</li>
+          </ul>
         </article>
 
         <article class="card span-12">
-          <h3>문서 파일</h3>
+          <h3>문서별 역할</h3>
           <table>
             <thead>
               <tr>
-                <th>파일</th>
-                <th>용도</th>
+                <th>문서</th>
+                <th>역할</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>PRD.md</code></td>
-                <td>기능 요구서와 범위 정의</td>
+                <td>기능 범위, 사용자, 수용 기준을 정의</td>
               </tr>
               <tr>
                 <td><code>Architecture.md</code></td>
-                <td>기술 스택, 프로젝트 구조, 모듈 역할 정의</td>
+                <td>기술 스택, 프로젝트 구조, API, 데이터 모델을 정의</td>
               </tr>
               <tr>
                 <td><code>Operation.md</code></td>
-                <td>실행 방법, 운영 방법, 자주 발생하는 에러 정리</td>
+                <td>실행 방법, 운영 절차, 오류 대응을 정리</td>
               </tr>
             </tbody>
           </table>
+          <p class="small">이 페이지는 문서 내용을 한눈에 보는 인덱스 역할을 한다.</p>
         </article>
       </section>
     </main>

@@ -17,6 +17,7 @@ type ViewMode = "members" | "schedules" | "week" | "month";
 
 type MemberFormState = {
   name: string;
+  department: string;
   role: string;
   phone: string;
   memo: string;
@@ -34,6 +35,7 @@ type ScheduleFormState = {
 
 const emptyMemberForm: MemberFormState = {
   name: "",
+  department: "",
   role: "",
   phone: "",
   memo: "",
@@ -130,6 +132,7 @@ export function TeamSchedulePanel() {
     try {
       const payload = {
         name: memberForm.name.trim(),
+        department: memberForm.department.trim(),
         role: memberForm.role.trim(),
         phone: memberForm.phone.trim(),
         memo: memberForm.memo.trim(),
@@ -260,6 +263,14 @@ export function TeamSchedulePanel() {
                   <input value={memberForm.name} onChange={(event) => setMemberForm({ ...memberForm, name: event.target.value })} required />
                 </label>
                 <label>
+                  Department
+                  <input
+                    value={memberForm.department}
+                    onChange={(event) => setMemberForm({ ...memberForm, department: event.target.value })}
+                    placeholder="예: 행정지원팀"
+                  />
+                </label>
+                <label>
                   Role
                   <input value={memberForm.role} onChange={(event) => setMemberForm({ ...memberForm, role: event.target.value })} />
                 </label>
@@ -306,6 +317,7 @@ export function TeamSchedulePanel() {
                   <thead>
                     <tr>
                       <th>Name</th>
+                      <th>Department</th>
                       <th>Role</th>
                       <th>Phone</th>
                       <th>Status</th>
@@ -316,6 +328,7 @@ export function TeamSchedulePanel() {
                     {members.map((member) => (
                       <tr key={member.id}>
                         <td>{member.name}</td>
+                        <td>{member.department ?? "-"}</td>
                         <td>{member.role ?? "-"}</td>
                         <td>{member.phone ?? "-"}</td>
                         <td>{member.is_active ? "Active" : "Inactive"}</td>
@@ -328,6 +341,7 @@ export function TeamSchedulePanel() {
                                 setEditingMemberId(member.id);
                                 setMemberForm({
                                   name: member.name,
+                                  department: member.department ?? "",
                                   role: member.role ?? "",
                                   phone: member.phone ?? "",
                                   memo: member.memo ?? "",
@@ -345,7 +359,7 @@ export function TeamSchedulePanel() {
                     ))}
                     {members.length === 0 ? (
                       <tr>
-                        <td colSpan={5}>No members yet.</td>
+                        <td colSpan={6}>No members yet.</td>
                       </tr>
                     ) : null}
                   </tbody>

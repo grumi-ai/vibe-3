@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class MemberBase(BaseModel):
     name: str
+    department: str | None = None
     role: str | None = None
     phone: str | None = None
     memo: str | None = None
@@ -14,6 +15,7 @@ class MemberCreate(MemberBase):
 
 class MemberUpdate(BaseModel):
     name: str | None = None
+    department: str | None = None
     role: str | None = None
     phone: str | None = None
     memo: str | None = None

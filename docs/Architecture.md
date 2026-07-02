@@ -1,37 +1,13 @@
-# 공공직군 행정업무 슈퍼앱 Architecture
-
-## 목차
-
-- [1. 기술 스택](#1-기술-스택)
-- [2. 전체 구조](#2-전체-구조)
-- [3. 모듈 역할](#3-모듈-역할)
-- [4. 데이터 모델](#4-데이터-모델)
-- [5. API 개요](#5-api-개요)
-- [6. 설계 원칙](#6-설계-원칙)
-- [7. 확장 방향](#7-확장-방향)
+# 공공직군 행정업무 슈퍼앱 기술 아키텍처
 
 ## 1. 기술 스택
 
-### Frontend
+- Frontend: TypeScript + Vite + React
+- Backend: Python + FastAPI
+- Python 패키지 관리: `uv`
+- Database: SQLite
 
-- React
-- TypeScript
-- Vite
-- 브라우저 상태 관리 및 화면 렌더링
-
-### Backend
-
-- Python
-- FastAPI
-- Uvicorn
-- SQLite 연결 및 API 제공
-
-### Database
-
-- SQLite
-- 단일 파일 기반 로컬 DB
-
-## 2. 전체 구조
+## 2. 시스템 구조
 
 ```text
 day3_rpa/
@@ -59,6 +35,7 @@ day3_rpa/
       schemas/
       services/
       jobs/
+      crawlers/
   docs/
 ```
 
@@ -66,84 +43,24 @@ day3_rpa/
 
 ### 3.1 Frontend
 
-#### `pages`
-
-- 화면 단위 진입점
-- 대시보드 및 기능 페이지 조합
-
-#### `features/team-schedule`
-
-- 팀원 관리
-- 일정 등록/수정/삭제
-- 주간 뷰
-- 월간 뷰
-- 검색/필터
-
-#### `features/excel-automation`
-
-- 파일 업로드
-- 컬럼 기준 분리/병합
-- 결과 다운로드
-
-#### `features/complaint-chatbot`
-
-- 민원 매뉴얼 업로드
-- 질문 입력
-- 답변 초안 출력
-
-#### `features/news`
-
-- 뉴스 목록
-- 키워드 필터
-- 수집 상태 확인
-
-#### `shared/api`
-
-- 공통 API 호출 함수
-- 헬스 체크 API
-
-#### `shared/components`
-
-- 공통 카드
-- 상태 표시
-- 공통 스캐폴드
-
-#### `shared/utils`
-
-- 날짜 계산
-- 포맷 변환
+- `pages`: 전체 화면 조합, 대시보드, 통합 상태 확인
+- `features/team-schedule`: 팀원 CRUD, 일정 CRUD, 주간/월간 뷰
+- `features/excel-automation`: 파일 업로드, 분리/병합 UI
+- `features/complaint-chatbot`: 매뉴얼 업로드, 질문 입력, 응답 표시
+- `features/news`: 기사 목록, 수집 상태, 키워드 확인
+- `shared/api`: 공통 API 클라이언트와 health 체크
+- `shared/components`: 공통 카드, 상태 표시, 설정 패널
+- `shared/utils`: 날짜 계산, 포맷 변환, 범위 계산
 
 ### 3.2 Backend
 
-#### `api/routes`
-
-- HTTP 엔드포인트 정의
-- 요청 라우팅
-- 응답 반환
-
-#### `services`
-
-- 비즈니스 규칙 처리
-- 저장소 호출 전후 로직 처리
-
-#### `repositories`
-
-- SQLite 쿼리 수행
-- 데이터 CRUD 담당
-
-#### `schemas`
-
-- 요청/응답 데이터 모델
-- Pydantic 기반 검증
-
-#### `models`
-
-- DB 스키마 정의
-
-#### `jobs`
-
-- 정기 실행 작업
-- 뉴스 수집 같은 스케줄 작업
+- `api/routes`: HTTP 엔드포인트 정의
+- `services`: 비즈니스 로직 처리
+- `repositories`: SQLite CRUD 및 조회 처리
+- `schemas`: 요청/응답 모델 검증
+- `models`: 테이블 스키마 정의
+- `jobs`: 정기 수집, 스케줄 실행
+- `crawlers`: 뉴스 원천 수집 로직
 
 ## 4. 데이터 모델
 
@@ -153,6 +70,7 @@ day3_rpa/
 | --- | --- | --- |
 | id | integer | 팀원 ID |
 | name | text | 이름 |
+| department | text | 부서 |
 | role | text | 역할 |
 | phone | text | 연락처 |
 | memo | text | 메모 |
@@ -165,7 +83,7 @@ day3_rpa/
 | 컬럼 | 타입 | 설명 |
 | --- | --- | --- |
 | id | integer | 일정 ID |
-| member_id | integer | 팀원 ID |
+| member_id | integer | 팀원 ID, 미지정 가능 |
 | title | text | 일정 제목 |
 | schedule_type | text | 휴가, 근무, 출장 등 |
 | starts_at | datetime | 시작 시각 |
@@ -178,7 +96,7 @@ day3_rpa/
 | 컬럼 | 타입 | 설명 |
 | --- | --- | --- |
 | id | integer | 매뉴얼 ID |
-| filename | text | 파일명 |
+| filename | text | 원본 파일명 |
 | content_text | text | 추출 텍스트 |
 | uploaded_at | datetime | 업로드 시각 |
 
@@ -188,7 +106,7 @@ day3_rpa/
 | --- | --- | --- |
 | id | integer | 로그 ID |
 | question | text | 질문 |
-| answer | text | 답변 |
+| answer | text | 응답 |
 | created_at | datetime | 생성 시각 |
 
 ### news_articles
@@ -198,11 +116,28 @@ day3_rpa/
 | id | integer | 기사 ID |
 | title | text | 제목 |
 | source | text | 출처 |
+| agency | text | 기관 |
 | url | text | 기사 링크 |
 | summary | text | 요약 |
+| content | text | 본문 또는 발췌 |
 | keyword | text | 수집 키워드 |
 | published_at | datetime | 게시 시각 |
+| target_date | text | 수집 기준일 |
 | collected_at | datetime | 수집 시각 |
+
+### news_crawl_runs
+
+| 컬럼 | 타입 | 설명 |
+| --- | --- | --- |
+| id | integer | 실행 ID |
+| target_date | text | 대상 날짜 |
+| status | text | 성공/실패 상태 |
+| total_count | integer | 총 수집 건수 |
+| success_count | integer | 성공 건수 |
+| failed_count | integer | 실패 건수 |
+| error_message | text | 오류 메시지 |
+| started_at | datetime | 시작 시각 |
+| finished_at | datetime | 종료 시각 |
 
 ## 5. API 개요
 
@@ -213,12 +148,12 @@ day3_rpa/
 
 ### Team Schedule
 
-- `GET /api/members`
+- `GET /api/members?keyword=&isActive=`
 - `POST /api/members`
 - `GET /api/members/{member_id}`
 - `PUT /api/members/{member_id}`
 - `DELETE /api/members/{member_id}`
-- `GET /api/schedules`
+- `GET /api/schedules?start=&end=&memberId=&keyword=`
 - `POST /api/schedules`
 - `GET /api/schedules/{schedule_id}`
 - `PUT /api/schedules/{schedule_id}`
@@ -238,22 +173,24 @@ day3_rpa/
 
 ### News
 
-- `GET /api/news`
+- `GET /api/news?targetDate=`
 - `POST /api/news/collect`
 - `GET /api/news/keywords`
+- `GET /api/news/crawl-runs`
 
-## 6. 설계 원칙
+## 6. 데이터 흐름
 
-- 프론트엔드는 화면과 상태 표현에 집중한다.
-- 서비스 계층은 도메인 규칙을 담당한다.
-- 저장소 계층은 DB 접근만 담당한다.
-- 일정 조회는 날짜 범위를 기준으로 재사용한다.
-- SQLite MVP에서 시작하되, 향후 PostgreSQL 전환 가능 구조를 유지한다.
+1. 사용자가 FE에서 팀원 또는 일정 정보를 입력한다.
+2. FE는 공통 API 클라이언트를 통해 FastAPI 엔드포인트를 호출한다.
+3. 서비스 계층이 입력값 검증과 비즈니스 규칙을 처리한다.
+4. 저장소 계층이 SQLite에 읽기/쓰기 작업을 수행한다.
+5. 응답은 FE로 돌아가고, 화면은 즉시 갱신된다.
 
-## 7. 확장 방향
+## 7. 운영 방향
 
-- 권한 관리 고도화
-- 외부 캘린더 연동
-- 뉴스 수집 키워드 관리 고도화
-- 민원 챗봇의 검색형과 생성형 분리 강화
-- PostgreSQL 및 Docker 전환
+- SQLite 기반 MVP로 시작한다.
+- 저장 데이터가 늘어나면 PostgreSQL로 이전할 수 있도록 레이어를 분리한다.
+- 뉴스 수집과 같은 배치성 작업은 `jobs` 계층에서 관리한다.
+- FE-BE, BE-DB 점검용 health endpoint를 유지한다.
+- 민원 챗봇은 추후 외부 LLM 연동으로 확장 가능하도록 인터페이스를 분리한다.
+
