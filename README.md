@@ -134,6 +134,18 @@ The repository also includes `render.yaml` for a two-service Render setup:
 
 The frontend reads the backend host through `VITE_API_BASE_URL`, and the backend allows cross-origin requests through `CORS_ORIGINS`.
 
+## Post-deployment checklist
+
+Use this after the Render services finish deploying:
+
+1. Open the frontend URL and confirm the dashboard loads.
+2. Open the backend health endpoint and confirm it returns `status: ok`.
+3. Open the database health endpoint and confirm SQLite is initialized.
+4. Create a member and a schedule from the UI, then refresh to confirm the data persists.
+5. Open the browser network panel and confirm `/api` requests resolve to the backend host, not `localhost`.
+6. Verify the frontend does not show CORS or fetch errors.
+7. If anything fails, check the Render service logs for the backend first.
+
 ## Troubleshooting
 
 - If `npm` fails in PowerShell, use `npm.cmd`.
