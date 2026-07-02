@@ -97,21 +97,19 @@ npm.cmd run dev
 - `GET /api/news/crawl-runs`
 - `GET /api/news/keywords`
 
-## First deployment notes
+## Deployment notes
 
-This repository now includes Docker-based deployment config and a Render blueprint.
+The repository is set up for:
 
-Recommended first production setup:
+- Frontend: GitHub Pages
+- Backend: FastAPI exposed through Cloudflared Tunnel
 
-1. Deploy the backend API first.
-2. Move SQLite to a production database if persistence matters.
-3. Deploy the frontend with the API base URL pointed to the backend.
+Recommended production setup:
+
+1. Create a Cloudflare Tunnel and point it to the backend service.
+2. Set the backend `CORS_ORIGINS` to include your GitHub Pages origin.
+3. Set the GitHub Pages `VITE_API_BASE_URL` to the tunnel hostname.
 4. Verify `GET /api/health` and `GET /api/db/health`.
-
-Suggested target split:
-
-- Backend: Render, Fly.io, Railway, or a similar Python host
-- Frontend: Vercel, Netlify, or a similar static host
 
 ### Docker-based deployment
 
@@ -126,12 +124,20 @@ docker compose up --build
 
 The frontend container serves the built SPA through Nginx and proxies `/api` to the backend container.
 
-### Render deployment
+### GitHub Pages deployment
 
-The repository also includes `render.yaml` for a two-service Render setup:
+The repository includes `.github/workflows/deploy-frontend-pages.yml` for GitHub Pages:
 
-- `vibe-3-api`: Docker-based FastAPI service with a persistent disk for SQLite
-- `vibe-3-web`: Static site built from the Vite frontend
+- The workflow builds the frontend with `--base=/<repo-name>/`
+- The build uses `vars.VITE_API_BASE_URL` for the backend tunnel hostname
+
+### Cloudflared Tunnel deployment
+
+The repository includes a `cloudflared` service in `docker-compose.yml`:
+
+- Set `CLOUDFLARED_TUNNEL_TOKEN`
+- Set the backend `CORS_ORIGINS` to include the GitHub Pages origin
+- Run `docker compose --profile tunnel up --build`
 
 The frontend reads the backend host through `VITE_API_BASE_URL`, and the backend allows cross-origin requests through `CORS_ORIGINS`.
 

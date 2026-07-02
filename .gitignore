@@ -13,3 +13,6 @@ backend/data/*.db-*
 frontend/vite.config.js
 frontend/vite.config.d.ts
 frontend/*.tsbuildinfo
+.env
+.env.*
+!.env.example
