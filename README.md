@@ -126,10 +126,30 @@ The frontend container serves the built SPA through Nginx and proxies `/api` to 
 
 ### GitHub Pages deployment
 
-The repository includes `.github/workflows/deploy-frontend-pages.yml` for GitHub Pages:
+The repository includes `.github/workflows/deploy-frontend-pages.yml` for GitHub Pages.
 
-- The workflow builds the frontend with `--base=/<repo-name>/`
-- The build uses `vars.VITE_API_BASE_URL` for the backend tunnel hostname
+What the workflow does:
+
+- Builds the frontend on every push to `main`
+- Uses the repository name as the Pages base path
+- Reads the backend tunnel hostname from `vars.VITE_API_BASE_URL`
+- Uploads `frontend/dist` and deploys it with GitHub Pages
+
+What you need to do in GitHub:
+
+1. Open the repository on GitHub.
+2. Go to `Settings > Pages`.
+3. Set `Build and deployment > Source` to `GitHub Actions`.
+4. Go to `Settings > Secrets and variables > Actions`.
+5. Add a repository variable named `VITE_API_BASE_URL`.
+6. Set its value to the Cloudflared Tunnel public hostname, such as `https://api.example.com`.
+7. Push to `main` or run the workflow from the Actions tab.
+
+Notes:
+
+- The site is built for a subpath like `/<repo-name>/`.
+- `frontend/public/404.html` handles direct route refreshes.
+- `frontend/public/.nojekyll` prevents GitHub Pages from treating underscore files specially.
 
 ### Cloudflared Tunnel deployment
 
@@ -143,7 +163,7 @@ The frontend reads the backend host through `VITE_API_BASE_URL`, and the backend
 
 ## Post-deployment checklist
 
-Use this after the Render services finish deploying:
+Use this after GitHub Pages and the Cloudflared Tunnel are connected:
 
 1. Open the frontend URL and confirm the dashboard loads.
 2. Open the backend health endpoint and confirm it returns `status: ok`.
@@ -151,7 +171,7 @@ Use this after the Render services finish deploying:
 4. Create a member and a schedule from the UI, then refresh to confirm the data persists.
 5. Open the browser network panel and confirm `/api` requests resolve to the backend host, not `localhost`.
 6. Verify the frontend does not show CORS or fetch errors.
-7. If anything fails, check the Render service logs for the backend first.
+7. If anything fails, check the backend service logs first.
 
 ## Policy news crawling
 
